@@ -25,6 +25,7 @@
     --need: #DCEBE2;
     --want: #F3E3D3;
     --danger: #A3321F;
+    --ochre: #B7791F;
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -41,7 +42,7 @@
     line-height: 1.45;
     -webkit-text-size-adjust: 100%;
   }
-  main { max-width: 30rem; margin: 0 auto; padding: 1.25rem 1.1rem 4rem; }
+  main { max-width: 30rem; margin: 0 auto; padding: 1.25rem 1.1rem 7rem; }
   h1 { font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
   h2 { font-size: 1.05rem; font-weight: 700; margin: 2.2rem 0 0.6rem; }
   header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.2rem; }
@@ -115,6 +116,55 @@
   .r-del { grid-column: 3; justify-self: end; font-size: 0.85rem; }
   .empty { color: var(--muted); }
 
+
+  /* bottom navigation */
+  .nav {
+    position: fixed; left: 0; right: 0; bottom: 0; display: flex;
+    background: var(--card); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .nav button {
+    flex: 1; min-height: 3.4rem; border: 0; background: none; cursor: pointer;
+    color: var(--muted); font-weight: 500;
+  }
+  .nav button[aria-current="page"] { color: var(--spruce); font-weight: 700; box-shadow: inset 0 3px 0 var(--spruce); }
+
+  /* dashboard */
+  .month-tabs { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.4rem; margin-bottom: 1rem; -webkit-overflow-scrolling: touch; }
+  .month-tabs button {
+    flex: none; min-height: 2.5rem; padding: 0.4rem 1rem; border-radius: 999px;
+    border: 1.5px solid var(--line); background: var(--card); cursor: pointer;
+  }
+  .month-tabs button[aria-selected="true"] { background: var(--spruce); border-color: var(--spruce); color: #fff; font-weight: 500; }
+
+  .dash-total { display: flex; align-items: baseline; gap: 0.3rem; padding: 0.2rem 0 0.2rem; }
+  .dash-total .cur { font-size: 2.2rem; font-weight: 500; color: var(--muted); }
+  .dash-total .num { font-size: 3.6rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .dash-sub { margin: 0 0 1rem; padding-bottom: 0.7rem; border-bottom: 2px dashed var(--line); color: var(--muted); }
+
+  .split-bar { display: flex; height: 1.1rem; border-radius: 0.55rem; overflow: hidden; background: var(--line); }
+  .split-bar .n { background: var(--spruce); }
+  .split-bar .w { background: var(--ochre); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; margin-top: 0.6rem; font-variant-numeric: tabular-nums; }
+  .legend .sw { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; margin-right: 0.4rem; }
+  .legend .sw.n { background: var(--spruce); }
+  .legend .sw.w { background: var(--ochre); }
+
+  .group-head { display: flex; justify-content: space-between; align-items: baseline; margin: 1.4rem 0 0.3rem; }
+  .group-head h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+  .group-head span { font-variant-numeric: tabular-nums; color: var(--muted); }
+  ul.cats { list-style: none; margin: 0; padding: 0; }
+  li.cat { padding: 0.55rem 0; border-bottom: 1px solid var(--line); }
+  li.cat.zero { color: var(--muted); }
+  .cat-top { display: grid; grid-template-columns: 1fr auto 3.6rem; gap: 0.5rem; align-items: baseline; font-variant-numeric: tabular-nums; }
+  .cat-amt { font-weight: 500; }
+  .cat-pct { text-align: right; color: var(--muted); font-size: 0.9rem; }
+  .bar-track { height: 0.5rem; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 0.35rem; }
+  .bar-fill { height: 100%; border-radius: 999px; }
+  li.cat.need .bar-fill { background: var(--spruce); }
+  li.cat.want .bar-fill { background: var(--ochre); }
+  .err-text { color: var(--danger); }
+
   .hidden { display: none !important; }
   .login-card { margin-top: 18vh; }
   .login-card p { color: var(--muted); margin: 0.4rem 0 1.4rem; }
@@ -146,9 +196,11 @@
   <!-- App -->
   <section id="app" class="hidden">
     <header>
-      <h1>Log a purchase</h1>
+      <h1 id="title">Log a purchase</h1>
       <button id="signout" class="link-btn" type="button">Sign out</button>
     </header>
+
+    <div id="view-log">
 
     <div id="lines"></div>
 
@@ -169,6 +221,17 @@
 
     <h2>Recent entries</h2>
     <ul id="recent" class="recent"></ul>
+    </div>
+
+    <div id="view-dash" class="hidden">
+      <div id="month-tabs" class="month-tabs" role="tablist" aria-label="Month"></div>
+      <div id="dash-body"></div>
+    </div>
+
+    <nav id="nav" class="nav" aria-label="Main">
+      <button type="button" data-view="log" aria-current="page">Log</button>
+      <button type="button" data-view="dash">Dashboard</button>
+    </nav>
   </section>
 
 </main>
@@ -185,6 +248,8 @@
   let categories = [];   // rows from the categories table
   let rules = [];        // rows from the merchant_rules table
   let lines = [newLine()]; // one entry per category chunk of a purchase
+  let months = [];         // month tabs on the dashboard, like '2026-09'
+  let activeMonth = null;  // the month tab currently selected
 
   function newLine() { return { amount: '', categoryId: null }; }
 
@@ -213,6 +278,7 @@
   async function showForSession(session) {
     $('login').classList.toggle('hidden', !!session);
     $('app').classList.toggle('hidden', !session);
+    if (!session) { months = []; activeMonth = null; setView('log'); }
     if (session) {
       $('date').value = $('date').value || todayLocal();
       await loadReferenceData();
@@ -385,6 +451,185 @@
       li.append(del);
       list.append(li);
     });
+  }
+
+  // ---- Dashboard ----
+  const FIRST_MONTH = '2026-09'; // the earliest month tab, even before it has data
+
+  function nextYM(ym) {
+    const [y, m] = ym.split('-').map(Number);
+    return m === 12 ? (y + 1) + '-01' : y + '-' + String(m + 1).padStart(2, '0');
+  }
+  function monthName(ym, style) {
+    const [y, m] = ym.split('-').map(Number);
+    const opts = style === 'long' ? { month: 'long', year: 'numeric' } : { month: 'short' };
+    return new Date(y, m - 1, 1).toLocaleString('en-US', opts);
+  }
+  function bigMoney(n) {
+    return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function pct(part, whole) { return whole > 0 ? (part / whole) * 100 : 0; }
+
+  function setView(name) {
+    $('view-log').classList.toggle('hidden', name !== 'log');
+    $('view-dash').classList.toggle('hidden', name !== 'dash');
+    $('title').textContent = name === 'log' ? 'Log a purchase' : 'Dashboard';
+    document.querySelectorAll('#nav button').forEach(b => {
+      if (b.dataset.view === name) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    });
+    window.scrollTo(0, 0);
+    if (name === 'dash') refreshDashboard();
+  }
+  document.querySelectorAll('#nav button').forEach(b => { b.onclick = () => setView(b.dataset.view); });
+
+  async function refreshDashboard() {
+    await buildMonths();
+    renderMonthTabs();
+    await loadDashboard();
+  }
+
+  // Month tabs run from the first month through the current month, plus any month that has data
+  async function buildMonths() {
+    const [first, last] = await Promise.all([
+      db.from('line_items').select('date').order('date', { ascending: true }).limit(1),
+      db.from('line_items').select('date').order('date', { ascending: false }).limit(1),
+    ]);
+    const thisMonth = todayLocal().slice(0, 7);
+    let start = FIRST_MONTH, end = thisMonth, latestWithData = null;
+    if (first.data && first.data.length) {
+      const ym = first.data[0].date.slice(0, 7);
+      if (ym < start) start = ym;
+    }
+    if (last.data && last.data.length) {
+      latestWithData = last.data[0].date.slice(0, 7);
+      if (latestWithData > end) end = latestWithData;
+    }
+    months = [];
+    for (let ym = start; ym <= end; ym = nextYM(ym)) months.push(ym);
+    if (!activeMonth || !months.includes(activeMonth)) activeMonth = latestWithData || thisMonth;
+  }
+
+  function renderMonthTabs() {
+    const wrap = $('month-tabs');
+    wrap.replaceChildren();
+    if (!months.length) return;
+    const multiYear = months[0].slice(0, 4) !== months[months.length - 1].slice(0, 4);
+    months.forEach(ym => {
+      let label = monthName(ym);
+      if (multiYear) label += ' ' + ym.slice(2, 4);
+      const b = el('button', '', label);
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-label', monthName(ym, 'long'));
+      b.setAttribute('aria-selected', String(ym === activeMonth));
+      b.onclick = () => { activeMonth = ym; renderMonthTabs(); loadDashboard(); };
+      wrap.append(b);
+    });
+    const sel = wrap.querySelector('[aria-selected="true"]');
+    if (sel) sel.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }
+
+  function catRow(name, amt, total, group) {
+    const li = el('li', 'cat ' + group + (amt === 0 ? ' zero' : ''));
+    const top = el('div', 'cat-top');
+    top.append(el('span', 'cat-name', name));
+    top.append(el('span', 'cat-amt', money(amt)));
+    top.append(el('span', 'cat-pct', pct(amt, total).toFixed(1) + '%'));
+    li.append(top);
+    const track = el('div', 'bar-track');
+    track.setAttribute('aria-hidden', 'true');
+    const fill = el('div', 'bar-fill');
+    fill.style.width = pct(amt, total) + '%';
+    track.append(fill);
+    li.append(track);
+    return li;
+  }
+
+  async function loadDashboard() {
+    const body = $('dash-body');
+    const ym = activeMonth;
+    body.replaceChildren(el('p', 'empty', 'Loading...'));
+
+    const { data, error } = await db
+      .from('line_items')
+      .select('amount,categories(name,want_need)')
+      .gte('date', ym + '-01')
+      .lt('date', nextYM(ym) + '-01')
+      .limit(5000);
+
+    if (ym !== activeMonth) return; // another tab was picked while this one loaded
+    body.replaceChildren();
+
+    if (error) { body.append(el('p', 'err-text', 'Could not load this month: ' + error.message)); return; }
+    if (!data.length) {
+      body.append(el('p', 'empty', 'Nothing logged for ' + monthName(ym, 'long') + ' yet. Entries dated in this month, whether logged here or imported, will show up on this tab.'));
+      return;
+    }
+
+    // Add up spend per category
+    const byCat = new Map();
+    let total = 0;
+    data.forEach(r => {
+      const name = r.categories ? r.categories.name : 'Uncategorized';
+      const amt = Number(r.amount);
+      byCat.set(name, (byCat.get(name) || 0) + amt);
+      total += amt;
+    });
+
+    const groups = { Need: [], Want: [] };
+    const groupTotal = { Need: 0, Want: 0 };
+    categories.forEach(c => {
+      const amt = byCat.get(c.name) || 0;
+      groups[c.want_need].push({ name: c.name, amt });
+      groupTotal[c.want_need] += amt;
+    });
+
+    // Month total
+    const totalRow = el('div', 'dash-total');
+    totalRow.append(el('span', 'cur', '$'));
+    totalRow.append(el('span', 'num', bigMoney(total)));
+    body.append(totalRow);
+    body.append(el('p', 'dash-sub', data.length + (data.length === 1 ? ' entry' : ' entries') + ' in ' + monthName(ym, 'long')));
+
+    // Needs vs wants
+    body.append(el('h2', '', 'Needs vs wants'));
+    const bar = el('div', 'split-bar');
+    bar.setAttribute('aria-hidden', 'true');
+    const nSeg = el('span', 'n'); nSeg.style.width = pct(groupTotal.Need, total) + '%';
+    const wSeg = el('span', 'w'); wSeg.style.width = pct(groupTotal.Want, total) + '%';
+    bar.append(nSeg, wSeg);
+    body.append(bar);
+
+    const legend = el('div', 'legend');
+    [['n', 'Needs', groupTotal.Need], ['w', 'Wants', groupTotal.Want]].forEach(([cls, label, amt]) => {
+      const item = el('div');
+      item.append(el('span', 'sw ' + cls));
+      item.append(document.createTextNode(label + ' ' + money(amt) + ' (' + pct(amt, total).toFixed(1) + '%)'));
+      legend.append(item);
+    });
+    body.append(legend);
+
+    // By category, biggest first within each group
+    body.append(el('h2', '', 'By category'));
+    [['Need', 'Needs'], ['Want', 'Wants']].forEach(([key, label]) => {
+      const head = el('div', 'group-head');
+      head.append(el('h3', '', label));
+      head.append(el('span', '', money(groupTotal[key])));
+      body.append(head);
+      const list = el('ul', 'cats');
+      groups[key].sort((a, b) => b.amt - a.amt)
+        .forEach(c => list.append(catRow(c.name, c.amt, total, key.toLowerCase())));
+      body.append(list);
+    });
+
+    const uncategorized = byCat.get('Uncategorized') || 0;
+    if (uncategorized > 0) {
+      const head = el('div', 'group-head');
+      head.append(el('h3', '', 'Uncategorized'));
+      head.append(el('span', '', money(uncategorized)));
+      body.append(head);
+    }
   }
 
   // ---- Start ----
