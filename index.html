@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spend log</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Spend log">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F2F4EF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2F4EF;
+    --card: #FBFCFA;
+    --ink: #16241D;
+    --muted: #5E6E65;
+    --line: #D5DBD3;
+    --spruce: #1E5A45;
+    --need: #DCEBE2;
+    --want: #F3E3D3;
+    --danger: #A3321F;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 30rem; margin: 0 auto; padding: 1.25rem 1.1rem 4rem; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 1.05rem; font-weight: 700; margin: 2.2rem 0 0.6rem; }
+  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.2rem; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--spruce); outline-offset: 2px; }
+
+  .link-btn { background: none; border: 0; padding: 0.4rem 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+
+  label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 0.3rem; }
+  .field { margin-bottom: 1rem; }
+  input[type="text"], input[type="email"], input[type="password"], input[type="date"] {
+    width: 100%; min-height: 2.9rem; padding: 0.55rem 0.8rem;
+    border: 1.5px solid var(--line); border-radius: 0.6rem; background: var(--card);
+    font-size: 1rem;
+  }
+  input:focus { border-color: var(--spruce); outline: none; box-shadow: 0 0 0 3px rgba(30,90,69,0.18); }
+
+  /* the receipt line: the one memorable element */
+  .amount-wrap {
+    display: flex; align-items: baseline; gap: 0.3rem;
+    padding: 0.4rem 0 0.7rem; margin-bottom: 1rem;
+    border-bottom: 2px dashed var(--line);
+  }
+  .amount-wrap .cur { font-size: 2.2rem; font-weight: 500; color: var(--muted); }
+  .amount-wrap input {
+    flex: 1; min-width: 0; border: 0; background: transparent; padding: 0;
+    font-size: 3.6rem; font-weight: 700; letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .amount-wrap input:focus { box-shadow: none; }
+  .amount-wrap input::placeholder { color: #B9C3BC; }
+  .amount-wrap.small input { font-size: 2rem; }
+  .amount-wrap.small .cur { font-size: 1.4rem; }
+
+  .split-block { margin-bottom: 0.4rem; }
+  .split-head { display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem; }
+  .split-head span { font-size: 0.9rem; color: var(--muted); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin-bottom: 0.55rem; }
+  .group-label { width: 3.4rem; font-size: 0.85rem; color: var(--muted); }
+  .chip {
+    border: 1.5px solid transparent; border-radius: 999px; padding: 0.5rem 0.85rem;
+    min-height: 2.5rem; cursor: pointer; font-size: 0.95rem;
+  }
+  .chip.need { background: var(--need); }
+  .chip.want { background: var(--want); }
+  .chip[aria-pressed="true"] { background: var(--spruce); color: #fff; font-weight: 500; }
+
+  .add-split { margin: 0.4rem 0 1.2rem; }
+  .total-note { font-size: 0.9rem; color: var(--muted); margin: 0 0 1rem; font-variant-numeric: tabular-nums; }
+
+  .primary {
+    width: 100%; min-height: 3.2rem; border: 0; border-radius: 0.8rem;
+    background: var(--spruce); color: #fff; font-weight: 700; font-size: 1.05rem; cursor: pointer;
+  }
+  .primary:disabled { opacity: 0.55; cursor: default; }
+
+  #msg { min-height: 1.4rem; margin: 0.7rem 0 0; font-size: 0.95rem; }
+  #msg.err { color: var(--danger); }
+  #msg.ok { color: var(--spruce); font-weight: 500; }
+
+  ul.recent { list-style: none; margin: 0; padding: 0; }
+  ul.recent li {
+    display: grid; grid-template-columns: 3rem 1fr auto; gap: 0.2rem 0.6rem; align-items: baseline;
+    padding: 0.65rem 0; border-bottom: 1px solid var(--line);
+  }
+  .r-date { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .r-merchant { overflow-wrap: anywhere; }
+  .r-amt { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .r-cat { grid-column: 2; font-size: 0.85rem; color: var(--muted); }
+  .r-del { grid-column: 3; justify-self: end; font-size: 0.85rem; }
+  .empty { color: var(--muted); }
+
+  .hidden { display: none !important; }
+  .login-card { margin-top: 18vh; }
+  .login-card p { color: var(--muted); margin: 0.4rem 0 1.4rem; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .chip, .primary { transition: background-color 0.12s ease; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- Sign in -->
+  <section id="login" class="login-card hidden">
+    <h1>Spend log</h1>
+    <p>Sign in once. This device stays signed in after that.</p>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" inputmode="email">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password">
+    </div>
+    <button id="signin" class="primary" type="button">Sign in</button>
+    <p id="login-msg" class="err" role="status"></p>
+  </section>
+
+  <!-- App -->
+  <section id="app" class="hidden">
+    <header>
+      <h1>Log a purchase</h1>
+      <button id="signout" class="link-btn" type="button">Sign out</button>
+    </header>
+
+    <div id="lines"></div>
+
+    <button id="add-split" class="link-btn add-split" type="button">Split this with someone</button>
+    <p id="total-note" class="total-note hidden"></p>
+
+    <div class="field">
+      <label for="merchant">Where or what</label>
+      <input id="merchant" type="text" autocomplete="off" autocapitalize="sentences" placeholder="Tendergreens">
+    </div>
+    <div class="field">
+      <label for="date">Date</label>
+      <input id="date" type="date">
+    </div>
+
+    <button id="save" class="primary" type="button">Log it</button>
+    <p id="msg" role="status"></p>
+
+    <h2>Recent entries</h2>
+    <ul id="recent" class="recent"></ul>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ---- Connection settings (the anon key is public by design; RLS protects the data) ----
+  const SUPABASE_URL = 'https://tsufnghmexnwgdtcbzyq.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzdWZuZ2htZXhud2dkdGNienlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4ODM1NTEsImV4cCI6MjEwNjQ1OTU1MX0.W43cYcXWlB8GHw8_20x1nIWhuqn0Y7rM9-3Lk-QvA5k';
+
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ---- State ----
+  let categories = [];   // rows from the categories table
+  let rules = [];        // rows from the merchant_rules table
+  let lines = [newLine()]; // one entry per category chunk of a purchase
+
+  function newLine() { return { amount: '', categoryId: null }; }
+
+  // ---- Small helpers ----
+  const $ = (id) => document.getElementById(id);
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function todayLocal() {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 10);
+  }
+  function cleanAmount(s) { return parseFloat(String(s).replace(/[^0-9.]/g, '')); }
+  function money(n) { return '$' + Number(n).toFixed(2); }
+  function say(text, kind) {
+    const m = $('msg');
+    m.textContent = text || '';
+    m.className = kind || '';
+  }
+
+  // ---- Auth ----
+  async function showForSession(session) {
+    $('login').classList.toggle('hidden', !!session);
+    $('app').classList.toggle('hidden', !session);
+    if (session) {
+      $('date').value = $('date').value || todayLocal();
+      await loadReferenceData();
+      renderLines();
+      loadRecent();
+    }
+  }
+
+  $('signin').onclick = async () => {
+    const msg = $('login-msg');
+    msg.textContent = '';
+    const { error } = await db.auth.signInWithPassword({
+      email: $('email').value.trim(),
+      password: $('password').value,
+    });
+    if (error) msg.textContent = 'Could not sign in: ' + error.message;
+  };
+
+  $('signout').onclick = async () => { await db.auth.signOut(); };
+
+  db.auth.onAuthStateChange((_event, session) => { showForSession(session); });
+
+  // ---- Load categories and merchant rules ----
+  async function loadReferenceData() {
+    const [cats, rls] = await Promise.all([
+      db.from('categories').select('id,name,want_need').order('id'),
+      db.from('merchant_rules').select('merchant_pattern,default_category_id'),
+    ]);
+    if (cats.error) { say('Could not load categories: ' + cats.error.message, 'err'); return; }
+    categories = cats.data;
+    rules = rls.error ? [] : rls.data;
+  }
+
+  // ---- Entry lines (amount + category chips) ----
+  function renderLines() {
+    const wrap = $('lines');
+    wrap.replaceChildren();
+
+    lines.forEach((line, i) => {
+      const block = el('div', 'split-block');
+
+      if (i > 0) {
+        const head = el('div', 'split-head');
+        head.append(el('span', '', 'Split ' + (i + 1)));
+        const rm = el('button', 'link-btn', 'Remove');
+        rm.type = 'button';
+        rm.onclick = () => { lines.splice(i, 1); renderLines(); };
+        head.append(rm);
+        block.append(head);
+      }
+
+      const amtWrap = el('div', 'amount-wrap' + (i > 0 ? ' small' : ''));
+      amtWrap.append(el('span', 'cur', '$'));
+      const amt = document.createElement('input');
+      amt.type = 'text';
+      amt.inputMode = 'decimal';
+      amt.placeholder = '0.00';
+      amt.value = line.amount;
+      amt.setAttribute('aria-label', i === 0 ? 'Amount' : 'Amount for split ' + (i + 1));
+      amt.oninput = () => { line.amount = amt.value; updateTotal(); };
+      amtWrap.append(amt);
+      block.append(amtWrap);
+
+      for (const group of ['Need', 'Want']) {
+        const row = el('div', 'chip-row');
+        row.append(el('span', 'group-label', group === 'Need' ? 'Needs' : 'Wants'));
+        categories.filter(c => c.want_need === group).forEach(c => {
+          const b = el('button', 'chip ' + group.toLowerCase(), c.name);
+          b.type = 'button';
+          b.setAttribute('aria-pressed', String(line.categoryId === c.id));
+          b.onclick = () => { line.categoryId = c.id; renderLines(); };
+          row.append(b);
+        });
+        block.append(row);
+      }
+      wrap.append(block);
+    });
+
+    updateTotal();
+  }
+
+  function updateTotal() {
+    const note = $('total-note');
+    if (lines.length < 2) { note.classList.add('hidden'); return; }
+    const sum = lines.reduce((s, l) => s + (cleanAmount(l.amount) || 0), 0);
+    note.textContent = 'Split total ' + money(sum) + '. This should match what the card charged.';
+    note.classList.remove('hidden');
+  }
+
+  $('add-split').onclick = () => { lines.push(newLine()); renderLines(); };
+
+  // Pre-pick a category when the merchant matches a saved rule
+  $('merchant').oninput = () => {
+    if (lines[0].categoryId) return;
+    const m = $('merchant').value.trim().toLowerCase();
+    if (m.length < 3) return;
+    const hit = rules.find(r => {
+      const p = r.merchant_pattern.toLowerCase();
+      return m.includes(p) || p.includes(m);
+    });
+    if (hit) { lines[0].categoryId = hit.default_category_id; renderLines(); }
+  };
+
+  // ---- Save ----
+  $('save').onclick = async () => {
+    say('');
+    const merchant = $('merchant').value.trim();
+    const date = $('date').value;
+    if (!merchant) return say('Add where or what this was.', 'err');
+    if (!date) return say('Pick a date.', 'err');
+
+    const rows = [];
+    for (let i = 0; i < lines.length; i++) {
+      const amt = cleanAmount(lines[i].amount);
+      const label = lines.length > 1 ? ' for split ' + (i + 1) : '';
+      if (!(amt > 0)) return say('Enter an amount' + label + '.', 'err');
+      if (!lines[i].categoryId) return say('Pick a category' + label + '.', 'err');
+      rows.push({
+        date,
+        merchant,
+        category_id: lines[i].categoryId,
+        amount: Math.round(amt * 100) / 100,
+        source: 'manual',
+      });
+    }
+
+    const btn = $('save');
+    btn.disabled = true;
+    const { error } = await db.from('line_items').insert(rows);
+    btn.disabled = false;
+
+    if (error) return say('Could not save: ' + error.message, 'err');
+
+    $('merchant').value = '';
+    lines = [newLine()];
+    renderLines();
+    say('Logged ' + rows.length + (rows.length > 1 ? ' entries.' : ' entry.'), 'ok');
+    loadRecent();
+  };
+
+  // ---- Recent entries ----
+  async function loadRecent() {
+    const list = $('recent');
+    const { data, error } = await db
+      .from('line_items')
+      .select('id,date,merchant,amount,categories(name)')
+      .order('date', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(15);
+
+    list.replaceChildren();
+    if (error) { list.append(el('li', 'empty', 'Could not load entries: ' + error.message)); return; }
+    if (!data.length) { list.append(el('li', 'empty', 'Nothing logged yet. Your first entry will show up here.')); return; }
+
+    data.forEach(row => {
+      const li = el('li');
+      const [, mm, dd] = row.date.split('-');
+      li.append(el('span', 'r-date', Number(mm) + '/' + Number(dd)));
+      li.append(el('span', 'r-merchant', row.merchant));
+      li.append(el('span', 'r-amt', money(row.amount)));
+      li.append(el('span', 'r-cat', row.categories ? row.categories.name : 'Uncategorized'));
+      const del = el('button', 'link-btn r-del', 'Delete');
+      del.type = 'button';
+      del.onclick = async () => {
+        if (!confirm('Delete ' + row.merchant + ' (' + money(row.amount) + ')?')) return;
+        const { error: delErr } = await db.from('line_items').delete().eq('id', row.id);
+        if (delErr) return say('Could not delete: ' + delErr.message, 'err');
+        loadRecent();
+      };
+      li.append(del);
+      list.append(li);
+    });
+  }
+
+  // ---- Start ----
+  db.auth.getSession().then(({ data }) => showForSession(data.session));
+</script>
+</body>
+</html>
