@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Spend log</title>
+<title>Expenses tracker</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Spend log">
+<meta name="apple-mobile-web-app-title" content="Expenses tracker">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#F2F4EF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,6 +58,11 @@
     border: 1.5px solid var(--line); border-radius: 0.6rem; background: var(--card);
     font-size: 1rem;
   }
+  /* iOS Safari draws date inputs natively with their own width and centered text */
+  input[type="date"] {
+    display: block; min-width: 0; -webkit-appearance: none; appearance: none; text-align: left;
+  }
+  input[type="date"]::-webkit-date-and-time-value { text-align: left; }
   input:focus { border-color: var(--spruce); outline: none; box-shadow: 0 0 0 3px rgba(30,90,69,0.18); }
 
   /* the receipt line: the one memorable element */
@@ -142,6 +147,15 @@
   .dash-total .num { font-size: 3.6rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
   .dash-sub { margin: 0 0 1rem; padding-bottom: 0.7rem; border-bottom: 2px dashed var(--line); color: var(--muted); }
 
+  .budget-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-variant-numeric: tabular-nums; }
+  .budget-top .spent { font-weight: 700; }
+  .budget-top .left { color: var(--muted); }
+  .budget-top .left.over { color: var(--danger); font-weight: 500; }
+  .budget-track { height: 1.1rem; border-radius: 0.55rem; overflow: hidden; background: var(--line); margin-top: 0.4rem; }
+  .budget-fill { height: 100%; background: var(--spruce); }
+  .budget-fill.over { background: var(--danger); }
+  .footnote { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0 0; }
+
   .split-bar { display: flex; height: 1.1rem; border-radius: 0.55rem; overflow: hidden; background: var(--line); }
   .split-bar .n { background: var(--spruce); }
   .split-bar .w { background: var(--ochre); }
@@ -179,7 +193,7 @@
 
   <!-- Sign in -->
   <section id="login" class="login-card hidden">
-    <h1>Spend log</h1>
+    <h1>Expenses tracker</h1>
     <p>Sign in once. This device stays signed in after that.</p>
     <div class="field">
       <label for="email">Email</label>
@@ -204,7 +218,7 @@
 
     <div id="lines"></div>
 
-    <button id="add-split" class="link-btn add-split" type="button">Split this with someone</button>
+    <button id="add-split" class="link-btn add-split" type="button">Split between categories</button>
     <p id="total-note" class="total-note hidden"></p>
 
     <div class="field">
@@ -455,6 +469,9 @@
 
   // ---- Dashboard ----
   const FIRST_MONTH = '2026-09'; // the earliest month tab, even before it has data
+  const MONTHLY_BUDGET = 1500;
+  // Categories left out of the budget: any whose name contains this text
+  const BUDGET_EXCLUDE = 'major experience';
 
   function nextYM(ym) {
     const [y, m] = ym.split('-').map(Number);
@@ -591,6 +608,26 @@
     totalRow.append(el('span', 'num', bigMoney(total)));
     body.append(totalRow);
     body.append(el('p', 'dash-sub', data.length + (data.length === 1 ? ' entry' : ' entries') + ' in ' + monthName(ym, 'long')));
+
+    // Monthly budget, not counting major experiences
+    let excluded = 0;
+    byCat.forEach((amt, name) => { if (name.toLowerCase().includes(BUDGET_EXCLUDE)) excluded += amt; });
+    const budgetSpent = total - excluded;
+    const over = budgetSpent > MONTHLY_BUDGET;
+    body.append(el('h2', '', 'Monthly budget'));
+    const bTop = el('div', 'budget-top');
+    bTop.append(el('span', 'spent', money(budgetSpent) + ' of ' + money(MONTHLY_BUDGET) + '*'));
+    bTop.append(el('span', 'left' + (over ? ' over' : ''),
+      over ? money(budgetSpent - MONTHLY_BUDGET) + ' over' : money(MONTHLY_BUDGET - budgetSpent) + ' left'));
+    body.append(bTop);
+    const bTrack = el('div', 'budget-track');
+    bTrack.setAttribute('aria-hidden', 'true');
+    const bFill = el('div', 'budget-fill' + (over ? ' over' : ''));
+    bFill.style.width = Math.min(pct(budgetSpent, MONTHLY_BUDGET), 100) + '%';
+    bTrack.append(bFill);
+    body.append(bTrack);
+    body.append(el('p', 'footnote', '* Does not include major experiences'
+      + (excluded > 0 ? ' (' + money(excluded) + ' this month).' : '.')));
 
     // Needs vs wants
     body.append(el('h2', '', 'Needs vs wants'));

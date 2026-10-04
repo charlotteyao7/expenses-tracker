@@ -1,6 +1,6 @@
 {
-  "name": "Spend log",
-  "short_name": "Spend log",
+  "name": "Expenses tracker",
+  "short_name": "Expenses tracker",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
