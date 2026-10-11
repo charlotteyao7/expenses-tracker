@@ -118,7 +118,16 @@
   .r-merchant { overflow-wrap: anywhere; }
   .r-amt { font-weight: 500; font-variant-numeric: tabular-nums; }
   .r-cat { grid-column: 2; font-size: 0.85rem; color: var(--muted); }
-  .r-del { grid-column: 3; justify-self: end; font-size: 0.85rem; }
+  .r-actions { grid-column: 3; justify-self: end; display: flex; gap: 0.8rem; font-size: 0.85rem; }
+  ul.recent li.editing { display: block; padding: 0.9rem 0; }
+  li.editing label input, li.editing label select { margin-top: 0.3rem; color: var(--ink); }
+  li.editing select {
+    width: 100%; min-height: 2.9rem; padding: 0.55rem 0.8rem;
+    border: 1.5px solid var(--line); border-radius: 0.6rem; background: var(--card);
+    font: inherit; font-size: 1rem; color: inherit;
+  }
+  .edit-actions { display: flex; align-items: center; gap: 1rem; }
+  .edit-actions .primary { flex: 1; }
   .empty { color: var(--muted); }
 
 
@@ -382,7 +391,24 @@
     note.classList.remove('hidden');
   }
 
-  $('add-split').onclick = () => { lines.push(newLine()); renderLines(); };
+  // Adding a split divides the current total evenly across all splits
+  // and defaults the new split to Generosity (splits are usually with people)
+  $('add-split').onclick = () => {
+    const total = lines.reduce((s, l) => s + (cleanAmount(l.amount) || 0), 0);
+    const added = newLine();
+    const generosity = categories.find(c => c.name.toLowerCase().includes('generosity'));
+    if (generosity) added.categoryId = generosity.id;
+    lines.push(added);
+    if (total > 0) {
+      const cents = Math.round(total * 100);
+      const each = Math.floor(cents / lines.length);
+      // Any leftover cent goes to the first split so the total still matches
+      lines.forEach((l, i) => {
+        l.amount = ((each + (i === 0 ? cents - each * lines.length : 0)) / 100).toFixed(2);
+      });
+    }
+    renderLines();
+  };
 
   // Pre-pick a category when the merchant matches a saved rule
   $('merchant').oninput = () => {
@@ -438,7 +464,7 @@
     const list = $('recent');
     const { data, error } = await db
       .from('line_items')
-      .select('id,date,merchant,amount,categories(name)')
+      .select('id,date,merchant,amount,category_id,categories(name)')
       .order('date', { ascending: false })
       .order('id', { ascending: false })
       .limit(15);
@@ -454,17 +480,101 @@
       li.append(el('span', 'r-merchant', row.merchant));
       li.append(el('span', 'r-amt', money(row.amount)));
       li.append(el('span', 'r-cat', row.categories ? row.categories.name : 'Uncategorized'));
-      const del = el('button', 'link-btn r-del', 'Delete');
+      const actions = el('span', 'r-actions');
+      const edit = el('button', 'link-btn', 'Edit');
+      edit.type = 'button';
+      edit.onclick = () => startEdit(li, row);
+      const del = el('button', 'link-btn', 'Delete');
       del.type = 'button';
       del.onclick = async () => {
         if (!confirm('Delete ' + row.merchant + ' (' + money(row.amount) + ')?')) return;
-        const { error: delErr } = await db.from('line_items').delete().eq('id', row.id);
+        const { data: gone, error: delErr } = await db.from('line_items').delete().eq('id', row.id).select('id');
         if (delErr) return say('Could not delete: ' + delErr.message, 'err');
+        // Row-level security turns a blocked delete into a silent no-op, so check something was removed
+        if (!gone.length) return say('Could not delete: the database did not allow it (check the delete policy on line_items).', 'err');
         loadRecent();
       };
-      li.append(del);
+      actions.append(edit, del);
+      li.append(actions);
       list.append(li);
     });
+  }
+
+  // Swap a recent entry for an inline form to change it in place
+  function startEdit(li, row) {
+    li.replaceChildren();
+    li.className = 'editing';
+
+    function field(labelText, input) {
+      const f = el('div', 'field');
+      const lab = el('label', '', labelText);
+      lab.append(input);
+      f.append(lab);
+      return f;
+    }
+
+    const merchant = document.createElement('input');
+    merchant.type = 'text';
+    merchant.value = row.merchant;
+
+    const amount = document.createElement('input');
+    amount.type = 'text';
+    amount.inputMode = 'decimal';
+    amount.value = Number(row.amount).toFixed(2);
+
+    const date = document.createElement('input');
+    date.type = 'date';
+    date.value = row.date;
+
+    const cat = document.createElement('select');
+    for (const group of ['Need', 'Want']) {
+      const og = document.createElement('optgroup');
+      og.label = group === 'Need' ? 'Needs' : 'Wants';
+      categories.filter(c => c.want_need === group).forEach(c => {
+        const o = el('option', '', c.name);
+        o.value = c.id;
+        if (c.id === row.category_id) o.selected = true;
+        og.append(o);
+      });
+      cat.append(og);
+    }
+
+    const err = el('p', 'err-text');
+    const actions = el('div', 'edit-actions');
+    const save = el('button', 'primary', 'Save');
+    save.type = 'button';
+    const cancel = el('button', 'link-btn', 'Cancel');
+    cancel.type = 'button';
+    cancel.onclick = () => loadRecent();
+
+    save.onclick = async () => {
+      const amt = cleanAmount(amount.value);
+      if (!merchant.value.trim()) { err.textContent = 'Add where or what this was.'; return; }
+      if (!(amt > 0)) { err.textContent = 'Enter an amount.'; return; }
+      if (!date.value) { err.textContent = 'Pick a date.'; return; }
+      save.disabled = true;
+      const { data: changed, error } = await db.from('line_items').update({
+        merchant: merchant.value.trim(),
+        amount: Math.round(amt * 100) / 100,
+        date: date.value,
+        category_id: Number(cat.value),
+      }).eq('id', row.id).select('id');
+      save.disabled = false;
+      if (error) { err.textContent = 'Could not save: ' + error.message; return; }
+      if (!changed.length) { err.textContent = 'Could not save: the database did not allow it (check the update policy on line_items).'; return; }
+      loadRecent();
+    };
+
+    actions.append(save, cancel);
+    li.append(
+      field('Where or what', merchant),
+      field('Amount', amount),
+      field('Date', date),
+      field('Category', cat),
+      err,
+      actions,
+    );
+    merchant.focus();
   }
 
   // ---- Dashboard ----
