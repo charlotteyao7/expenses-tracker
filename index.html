@@ -128,6 +128,7 @@
   .edit-actions { display: flex; align-items: center; gap: 1rem; }
   .edit-actions .primary { flex: 1; }
   .empty { color: var(--umber-soft); font-style: italic; }
+  .more { display: block; margin: 0.6rem auto 0; font-size: 1.05rem; }
 
   /* bottom navigation */
   .nav {
@@ -225,6 +226,7 @@
 
     <h2>Recent entries</h2>
     <ul id="recent" class="recent"></ul>
+    <button id="more" class="link-btn more hidden" type="button">Show more</button>
     </div>
 
     <div id="view-dash" class="hidden">
@@ -523,6 +525,11 @@
   };
 
   // ---- Recent entries ----
+  // Grows by a page each time you tap Show more, and stays that size after edits and deletes
+  const RECENT_PAGE = 15;
+  let recentLimit = RECENT_PAGE;
+  $('more').onclick = () => { recentLimit += RECENT_PAGE; loadRecent(); };
+
   async function loadRecent() {
     const list = $('recent');
     const { data, error } = await db
@@ -530,10 +537,12 @@
       .select('id,date,merchant,amount,category_id,spread_start,spread_months')
       .order('date', { ascending: false })
       .order('id', { ascending: false })
-      .limit(15);
+      .limit(recentLimit + 1); // one extra tells us whether there's more to show
 
     list.replaceChildren();
+    $('more').classList.add('hidden');
     if (error) { list.append(el('li', 'empty', 'Could not load entries: ' + error.message)); return; }
+    if (data.length > recentLimit) { data.pop(); $('more').classList.remove('hidden'); }
     if (!data.length) { list.append(el('li', 'empty', 'Nothing logged yet. Your first entry will show up here.')); return; }
 
     data.forEach(row => {
