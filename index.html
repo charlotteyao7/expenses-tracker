@@ -10,22 +10,22 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Expenses tracker">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#F2F4EF">
+<meta name="theme-color" content="#E8E1D5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F2F4EF;
-    --card: #FBFCFA;
-    --ink: #16241D;
-    --muted: #5E6E65;
-    --line: #D5DBD3;
-    --spruce: #1E5A45;
-    --need: #DCEBE2;
-    --want: #F3E3D3;
-    --danger: #A3321F;
-    --ochre: #B7791F;
+    /* palette: linen, almond, umber, sage, terracotta */
+    --linen: #E8E1D5;
+    --paper: #F4EFE7;        /* linen lifted, for fields and the nav */
+    --almond: #CEB59E;
+    --almond-soft: #DDCDBC;  /* almond on linen, for unselected chips and bar tracks */
+    --umber: #4C362D;
+    --umber-soft: #6E5547;   /* secondary text */
+    --sage: #88937B;
+    --terracotta: #A46447;
+    --terracotta-ink: #8A4C33; /* terracotta dark enough for small text */
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -35,162 +35,143 @@
   body {
     margin: 0;
     min-height: 100%;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
-    font-size: 16px;
+    background: var(--linen);
+    color: var(--umber);
+    font-family: "EB Garamond", Garamond, Georgia, serif;
+    font-size: 18px;
     line-height: 1.45;
+    font-variant-numeric: lining-nums;
     -webkit-text-size-adjust: 100%;
   }
-  main { max-width: 30rem; margin: 0 auto; padding: 1.25rem 1.1rem 7rem; }
-  h1 { font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
-  h2 { font-size: 1.05rem; font-weight: 700; margin: 2.2rem 0 0.6rem; }
-  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.2rem; }
-  button, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 3px solid var(--spruce); outline-offset: 2px; }
+  main { max-width: 30rem; margin: 0 auto; padding: 1.4rem 1.1rem 7rem; }
+  h1 { font-size: 2rem; font-weight: 700; margin: 0; line-height: 1.1; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 2.4rem 0 0.5rem; }
+  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.4rem; }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--terracotta); outline-offset: 2px; }
 
-  .link-btn { background: none; border: 0; padding: 0.4rem 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  .link-btn { background: none; border: 0; padding: 0.4rem 0; color: var(--umber-soft); text-decoration: underline; text-underline-offset: 0.15em; cursor: pointer; }
 
-  label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 0.3rem; }
+  label { display: block; font-size: 0.95rem; color: var(--umber-soft); margin-bottom: 0.3rem; }
   .field { margin-bottom: 1rem; }
-  input[type="text"], input[type="email"], input[type="password"], input[type="date"] {
-    width: 100%; min-height: 2.9rem; padding: 0.55rem 0.8rem;
-    border: 1.5px solid var(--line); border-radius: 0.6rem; background: var(--card);
-    font-size: 1rem;
+  input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="month"], select {
+    width: 100%; min-height: 2.9rem; padding: 0.5rem 0.8rem;
+    border: 1px solid var(--almond); border-radius: 0.7rem; background: var(--paper);
+    font-size: 1.05rem;
   }
   /* iOS Safari draws date inputs natively with their own width and centered text */
-  input[type="date"] {
+  input[type="date"], input[type="month"] {
     display: block; min-width: 0; -webkit-appearance: none; appearance: none; text-align: left;
   }
-  input[type="date"]::-webkit-date-and-time-value { text-align: left; }
-  input:focus { border-color: var(--spruce); outline: none; box-shadow: 0 0 0 3px rgba(30,90,69,0.18); }
+  input[type="date"]::-webkit-date-and-time-value, input[type="month"]::-webkit-date-and-time-value { text-align: left; }
+  input:focus, select:focus { border-color: var(--terracotta); outline: none; box-shadow: 0 0 0 3px rgba(164,100,71,0.2); }
 
   /* the receipt line: the one memorable element */
   .amount-wrap {
     display: flex; align-items: baseline; gap: 0.3rem;
-    padding: 0.4rem 0 0.7rem; margin-bottom: 1rem;
-    border-bottom: 2px dashed var(--line);
+    padding: 0.2rem 0 0.6rem; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--almond);
   }
-  .amount-wrap .cur { font-size: 2.2rem; font-weight: 500; color: var(--muted); }
+  .amount-wrap .cur { font-size: 2.4rem; color: var(--umber-soft); }
   .amount-wrap input {
     flex: 1; min-width: 0; border: 0; background: transparent; padding: 0;
-    font-size: 3.6rem; font-weight: 700; letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums; line-height: 1.1;
+    font-size: 4rem; font-weight: 500;
+    font-variant-numeric: lining-nums tabular-nums; line-height: 1.1;
   }
   .amount-wrap input:focus { box-shadow: none; }
-  .amount-wrap input::placeholder { color: #B9C3BC; }
-  .amount-wrap.small input { font-size: 2rem; }
-  .amount-wrap.small .cur { font-size: 1.4rem; }
+  .amount-wrap input::placeholder { color: var(--almond); }
+  .amount-wrap.small input { font-size: 2.3rem; }
+  .amount-wrap.small .cur { font-size: 1.5rem; }
 
   .split-block { margin-bottom: 0.4rem; }
   .split-head { display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem; }
-  .split-head span { font-size: 0.9rem; color: var(--muted); }
+  .split-head span { font-style: italic; color: var(--umber-soft); }
 
-  .chip-row { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin-bottom: 0.55rem; }
-  .group-label { width: 3.4rem; font-size: 0.85rem; color: var(--muted); }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.7rem; }
   .chip {
-    border: 1.5px solid transparent; border-radius: 999px; padding: 0.5rem 0.85rem;
-    min-height: 2.5rem; cursor: pointer; font-size: 0.95rem;
+    border: 0; border-radius: 999px; padding: 0.45rem 0.95rem;
+    min-height: 2.6rem; cursor: pointer; font-size: 1.05rem;
+    background: var(--almond-soft);
   }
-  .chip.need { background: var(--need); }
-  .chip.want { background: var(--want); }
-  .chip[aria-pressed="true"] { background: var(--spruce); color: #fff; font-weight: 500; }
+  .chip[aria-pressed="true"] { background: var(--terracotta); color: var(--paper); font-weight: 500; }
 
   .add-split { margin: 0.4rem 0 1.2rem; }
-  .total-note { font-size: 0.9rem; color: var(--muted); margin: 0 0 1rem; font-variant-numeric: tabular-nums; }
+  .spread { margin: 0.2rem 0 0.8rem; }
+  .spread-row { display: flex; gap: 0.6rem; }
+  .spread-row label { flex: 1; min-width: 0; }
+  .spread-row select, .spread-row input { margin-top: 0.3rem; color: var(--umber); }
+  .spread-note { margin: 0.4rem 0 0; font-size: 0.95rem; font-style: italic; color: var(--umber-soft); }
+  .total-note { font-size: 0.95rem; font-style: italic; color: var(--umber-soft); margin: 0 0 1rem; }
 
   .primary {
     width: 100%; min-height: 3.2rem; border: 0; border-radius: 0.8rem;
-    background: var(--spruce); color: #fff; font-weight: 700; font-size: 1.05rem; cursor: pointer;
+    background: var(--umber); color: var(--linen); font-weight: 500; font-size: 1.2rem; cursor: pointer;
   }
   .primary:disabled { opacity: 0.55; cursor: default; }
 
-  #msg { min-height: 1.4rem; margin: 0.7rem 0 0; font-size: 0.95rem; }
-  #msg.err { color: var(--danger); }
-  #msg.ok { color: var(--spruce); font-weight: 500; }
+  #msg { min-height: 1.4rem; margin: 0.7rem 0 0; }
+  #msg.err { color: var(--terracotta-ink); }
+  #msg.ok { color: var(--umber); font-style: italic; }
 
   ul.recent { list-style: none; margin: 0; padding: 0; }
   ul.recent li {
-    display: grid; grid-template-columns: 3rem 1fr auto; gap: 0.2rem 0.6rem; align-items: baseline;
-    padding: 0.65rem 0; border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: 3rem 1fr auto; gap: 0.1rem 0.6rem; align-items: baseline;
+    padding: 0.7rem 0; border-bottom: 1px solid var(--almond);
   }
-  .r-date { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .r-date { color: var(--umber-soft); font-variant-numeric: lining-nums tabular-nums; }
   .r-merchant { overflow-wrap: anywhere; }
-  .r-amt { font-weight: 500; font-variant-numeric: tabular-nums; }
-  .r-cat { grid-column: 2; font-size: 0.85rem; color: var(--muted); }
-  .r-actions { grid-column: 3; justify-self: end; display: flex; gap: 0.8rem; font-size: 0.85rem; }
+  .r-amt { font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
+  .r-cat { grid-column: 2; font-size: 0.95rem; font-style: italic; color: var(--umber-soft); }
+  .r-actions { grid-column: 3; justify-self: end; display: flex; gap: 0.8rem; font-size: 0.95rem; }
   ul.recent li.editing { display: block; padding: 0.9rem 0; }
-  li.editing label input, li.editing label select { margin-top: 0.3rem; color: var(--ink); }
-  li.editing select {
-    width: 100%; min-height: 2.9rem; padding: 0.55rem 0.8rem;
-    border: 1.5px solid var(--line); border-radius: 0.6rem; background: var(--card);
-    font: inherit; font-size: 1rem; color: inherit;
-  }
+  li.editing label input, li.editing label select { margin-top: 0.3rem; color: var(--umber); }
   .edit-actions { display: flex; align-items: center; gap: 1rem; }
   .edit-actions .primary { flex: 1; }
-  .empty { color: var(--muted); }
-
+  .empty { color: var(--umber-soft); font-style: italic; }
 
   /* bottom navigation */
   .nav {
     position: fixed; left: 0; right: 0; bottom: 0; display: flex;
-    background: var(--card); border-top: 1px solid var(--line);
+    background: var(--paper); border-top: 1px solid var(--almond);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .nav button {
     flex: 1; min-height: 3.4rem; border: 0; background: none; cursor: pointer;
-    color: var(--muted); font-weight: 500;
+    color: var(--umber-soft); font-size: 1.1rem;
   }
-  .nav button[aria-current="page"] { color: var(--spruce); font-weight: 700; box-shadow: inset 0 3px 0 var(--spruce); }
+  .nav button[aria-current="page"] { color: var(--terracotta-ink); font-weight: 500; font-style: italic; box-shadow: inset 0 2px 0 var(--terracotta); }
 
   /* dashboard */
-  .month-tabs { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.4rem; margin-bottom: 1rem; -webkit-overflow-scrolling: touch; }
+  .month-tabs { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.4rem; margin-bottom: 1.2rem; -webkit-overflow-scrolling: touch; }
   .month-tabs button {
-    flex: none; min-height: 2.5rem; padding: 0.4rem 1rem; border-radius: 999px;
-    border: 1.5px solid var(--line); background: var(--card); cursor: pointer;
+    flex: none; min-height: 2.5rem; padding: 0.35rem 1.05rem; border-radius: 999px;
+    border: 1px solid var(--almond); background: transparent; cursor: pointer; font-size: 1.05rem;
   }
-  .month-tabs button[aria-selected="true"] { background: var(--spruce); border-color: var(--spruce); color: #fff; font-weight: 500; }
+  .month-tabs button[aria-selected="true"] { background: var(--umber); border-color: var(--umber); color: var(--linen); }
 
-  .dash-total { display: flex; align-items: baseline; gap: 0.3rem; padding: 0.2rem 0 0.2rem; }
-  .dash-total .cur { font-size: 2.2rem; font-weight: 500; color: var(--muted); }
-  .dash-total .num { font-size: 3.6rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
-  .dash-sub { margin: 0 0 1rem; padding-bottom: 0.7rem; border-bottom: 2px dashed var(--line); color: var(--muted); }
+  .dash-total { display: flex; align-items: baseline; gap: 0.3rem; }
+  .dash-total .cur { font-size: 2.4rem; color: var(--umber-soft); }
+  .dash-total .num { font-size: 4rem; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; line-height: 1.1; }
+  .dash-sub { margin: 0.2rem 0 0; padding-bottom: 0.8rem; border-bottom: 1px solid var(--almond); color: var(--umber-soft); font-style: italic; }
 
-  .budget-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-variant-numeric: tabular-nums; }
-  .budget-top .spent { font-weight: 700; }
-  .budget-top .left { color: var(--muted); }
-  .budget-top .left.over { color: var(--danger); font-weight: 500; }
-  .budget-track { height: 1.1rem; border-radius: 0.55rem; overflow: hidden; background: var(--line); margin-top: 0.4rem; }
-  .budget-fill { height: 100%; background: var(--spruce); }
-  .budget-fill.over { background: var(--danger); }
-  .footnote { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0 0; }
-
-  .split-bar { display: flex; height: 1.1rem; border-radius: 0.55rem; overflow: hidden; background: var(--line); }
-  .split-bar .n { background: var(--spruce); }
-  .split-bar .w { background: var(--ochre); }
-  .legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; margin-top: 0.6rem; font-variant-numeric: tabular-nums; }
-  .legend .sw { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; margin-right: 0.4rem; }
-  .legend .sw.n { background: var(--spruce); }
-  .legend .sw.w { background: var(--ochre); }
-
-  .group-head { display: flex; justify-content: space-between; align-items: baseline; margin: 1.4rem 0 0.3rem; }
-  .group-head h3 { margin: 0; font-size: 1rem; font-weight: 700; }
-  .group-head span { font-variant-numeric: tabular-nums; color: var(--muted); }
   ul.cats { list-style: none; margin: 0; padding: 0; }
-  li.cat { padding: 0.55rem 0; border-bottom: 1px solid var(--line); }
-  li.cat.zero { color: var(--muted); }
-  .cat-top { display: grid; grid-template-columns: 1fr auto 3.6rem; gap: 0.5rem; align-items: baseline; font-variant-numeric: tabular-nums; }
-  .cat-amt { font-weight: 500; }
-  .cat-pct { text-align: right; color: var(--muted); font-size: 0.9rem; }
-  .bar-track { height: 0.5rem; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 0.35rem; }
-  .bar-fill { height: 100%; border-radius: 999px; }
-  li.cat.need .bar-fill { background: var(--spruce); }
-  li.cat.want .bar-fill { background: var(--ochre); }
-  .err-text { color: var(--danger); }
+  li.cat { padding: 0.7rem 0; border-bottom: 1px solid var(--almond); }
+  li.cat.zero .cat-amt { color: var(--umber-soft); }
+  .cat-top { display: grid; grid-template-columns: 1fr auto auto; gap: 0.4rem; align-items: baseline; font-variant-numeric: lining-nums tabular-nums; }
+  .cat-name { font-size: 1.1rem; }
+  .cat-amt { font-weight: 500; font-size: 1.1rem; }
+  .cat-of { color: var(--umber-soft); }
+  .cat-sub { margin: 0.3rem 0 0; font-size: 0.95rem; color: var(--umber-soft); font-variant-numeric: lining-nums tabular-nums; }
+  .cat-sub .over { color: var(--terracotta-ink); font-weight: 500; }
+  .bar-track { height: 0.45rem; background: var(--almond-soft); border-radius: 999px; overflow: hidden; margin-top: 0.4rem; }
+  .bar-fill { height: 100%; border-radius: 999px; background: var(--sage); }
+  li.cat.none .bar-fill { background: var(--almond); }
+  li.cat .bar-fill.over { background: var(--terracotta); }
+  .err-text { color: var(--terracotta-ink); }
 
   .hidden { display: none !important; }
   .login-card { margin-top: 18vh; }
-  .login-card p { color: var(--muted); margin: 0.4rem 0 1.4rem; }
+  .login-card p { color: var(--umber-soft); font-style: italic; margin: 0.4rem 0 1.4rem; }
 
   @media (prefers-reduced-motion: no-preference) {
     .chip, .primary { transition: background-color 0.12s ease; }
@@ -268,13 +249,32 @@
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ---- State ----
-  let categories = [];   // rows from the categories table
+  let categories = [];   // every row from the categories table, retired ones included
+  let activeCats = [];   // the categories you can log to, in display order
+  let budgets = [];      // rows from category_budgets
   let rules = [];        // rows from the merchant_rules table
   let lines = [newLine()]; // one entry per category chunk of a purchase
   let months = [];         // month tabs on the dashboard, like '2026-09'
   let activeMonth = null;  // the month tab currently selected
 
-  function newLine() { return { amount: '', categoryId: null }; }
+  // Only Experiences purchases can be spread across months
+  const SPREAD_CATEGORY = 'experiences';
+
+  function newLine() { return { amount: '', categoryId: null, spreadMonths: 1, spreadStart: '' }; }
+
+  // Retired categories point at the category they now count toward.
+  // Entries keep their original category, so a future rename is just another retirement.
+  function resolveCat(id) {
+    let c = categories.find(x => x.id === id);
+    for (let hops = 0; c && c.rolls_into && hops < 10; hops++) {
+      c = categories.find(x => x.id === c.rolls_into);
+    }
+    return c || null;
+  }
+  function canSpread(categoryId) {
+    const c = resolveCat(categoryId);
+    return !!c && c.name.toLowerCase() === SPREAD_CATEGORY;
+  }
 
   // ---- Small helpers ----
   const $ = (id) => document.getElementById(id);
@@ -326,13 +326,16 @@
 
   // ---- Load categories and merchant rules ----
   async function loadReferenceData() {
-    const [cats, rls] = await Promise.all([
-      db.from('categories').select('id,name,want_need').order('id'),
+    const [cats, rls, bud] = await Promise.all([
+      db.from('categories').select('id,name,want_need,archived,rolls_into,sort_order').order('sort_order').order('id'),
       db.from('merchant_rules').select('merchant_pattern,default_category_id'),
+      db.from('category_budgets').select('category_id,starts_month,amount').order('starts_month'),
     ]);
     if (cats.error) { say('Could not load categories: ' + cats.error.message, 'err'); return; }
     categories = cats.data;
+    activeCats = categories.filter(c => !c.archived);
     rules = rls.error ? [] : rls.data;
+    budgets = bud.error ? [] : bud.data;
   }
 
   // ---- Entry lines (amount + category chips) ----
@@ -361,26 +364,84 @@
       amt.placeholder = '0.00';
       amt.value = line.amount;
       amt.setAttribute('aria-label', i === 0 ? 'Amount' : 'Amount for split ' + (i + 1));
-      amt.oninput = () => { line.amount = amt.value; updateTotal(); };
+      let refreshSpread = () => {};
+      amt.oninput = () => { line.amount = amt.value; updateTotal(); refreshSpread(); };
       amtWrap.append(amt);
       block.append(amtWrap);
 
-      for (const group of ['Need', 'Want']) {
-        const row = el('div', 'chip-row');
-        row.append(el('span', 'group-label', group === 'Need' ? 'Needs' : 'Wants'));
-        categories.filter(c => c.want_need === group).forEach(c => {
-          const b = el('button', 'chip ' + group.toLowerCase(), c.name);
-          b.type = 'button';
-          b.setAttribute('aria-pressed', String(line.categoryId === c.id));
-          b.onclick = () => { line.categoryId = c.id; renderLines(); };
-          row.append(b);
-        });
-        block.append(row);
+      const row = el('div', 'chip-row');
+      activeCats.forEach(c => {
+        const b = el('button', 'chip', c.name);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(line.categoryId === c.id));
+        b.onclick = () => { line.categoryId = c.id; renderLines(); };
+        row.append(b);
+      });
+      block.append(row);
+
+      if (canSpread(line.categoryId)) {
+        const s = spreadFields(line, () => line.amount, () => $('date').value);
+        refreshSpread = s.refresh;
+        block.append(s.box);
       }
       wrap.append(block);
     });
 
     updateTotal();
+  }
+
+  // "Spread over N months starting M" controls, shared by the log form and the edit form.
+  // state holds spreadMonths (number) and spreadStart ('2026-11'); it is changed in place.
+  function spreadFields(state, getAmount, getDate) {
+    const box = el('div', 'spread');
+    const row = el('div', 'spread-row');
+
+    const monthsLab = el('label', '', 'Spread over');
+    const sel = document.createElement('select');
+    for (let n = 1; n <= 12; n++) {
+      const o = el('option', '', n === 1 ? "Don't spread" : n + ' months');
+      o.value = n;
+      if (n === state.spreadMonths) o.selected = true;
+      sel.append(o);
+    }
+    monthsLab.append(sel);
+
+    const startLab = el('label', '', 'Starting');
+    const start = document.createElement('input');
+    start.type = 'month';
+    startLab.append(start);
+
+    row.append(monthsLab, startLab);
+    const note = el('p', 'spread-note');
+    box.append(row, note);
+
+    function refresh() {
+      if (state.spreadMonths > 1 && !state.spreadStart) {
+        state.spreadStart = (getDate() || todayLocal()).slice(0, 7);
+      }
+      start.value = state.spreadStart;
+      startLab.classList.toggle('hidden', state.spreadMonths < 2);
+      const amt = cleanAmount(getAmount());
+      if (state.spreadMonths < 2) {
+        note.textContent = 'Counts in full in the month you bought it. Spread a trip or gear across the months you use it.';
+      } else {
+        const end = addMonths(state.spreadStart, state.spreadMonths - 1);
+        note.textContent = (amt > 0 ? money(amt / state.spreadMonths) + ' a month, ' : '')
+          + monthName(state.spreadStart, 'long') + ' through ' + monthName(end, 'long') + '.';
+      }
+    }
+    sel.onchange = () => { state.spreadMonths = Number(sel.value); refresh(); };
+    start.onchange = () => { state.spreadStart = start.value; refresh(); };
+    refresh();
+    return { box, refresh };
+  }
+
+  // Database fields for an entry's spread, or nulls when it counts in its own month
+  function spreadColumns(state, categoryId) {
+    if (!canSpread(categoryId) || !(state.spreadMonths > 1) || !state.spreadStart) {
+      return { spread_start: null, spread_months: null };
+    }
+    return { spread_start: state.spreadStart + '-01', spread_months: state.spreadMonths };
   }
 
   function updateTotal() {
@@ -419,7 +480,8 @@
       const p = r.merchant_pattern.toLowerCase();
       return m.includes(p) || p.includes(m);
     });
-    if (hit) { lines[0].categoryId = hit.default_category_id; renderLines(); }
+    const cat = hit && resolveCat(hit.default_category_id);
+    if (cat) { lines[0].categoryId = cat.id; renderLines(); }
   };
 
   // ---- Save ----
@@ -442,6 +504,7 @@
         category_id: lines[i].categoryId,
         amount: Math.round(amt * 100) / 100,
         source: 'manual',
+        ...spreadColumns(lines[i], lines[i].categoryId),
       });
     }
 
@@ -464,7 +527,7 @@
     const list = $('recent');
     const { data, error } = await db
       .from('line_items')
-      .select('id,date,merchant,amount,category_id,categories(name)')
+      .select('id,date,merchant,amount,category_id,spread_start,spread_months')
       .order('date', { ascending: false })
       .order('id', { ascending: false })
       .limit(15);
@@ -479,7 +542,7 @@
       li.append(el('span', 'r-date', Number(mm) + '/' + Number(dd)));
       li.append(el('span', 'r-merchant', row.merchant));
       li.append(el('span', 'r-amt', money(row.amount)));
-      li.append(el('span', 'r-cat', row.categories ? row.categories.name : 'Uncategorized'));
+      li.append(el('span', 'r-cat', categoryLabel(row)));
       const actions = el('span', 'r-actions');
       const edit = el('button', 'link-btn', 'Edit');
       edit.type = 'button';
@@ -498,6 +561,18 @@
       li.append(actions);
       list.append(li);
     });
+  }
+
+  // "Eating Out (was Food - social) · spread over 3 months from Nov"
+  function categoryLabel(row) {
+    const own = categories.find(c => c.id === row.category_id);
+    const now = resolveCat(row.category_id);
+    let text = now ? now.name : 'Uncategorized';
+    if (own && now && own.id !== now.id) text += ' (was ' + own.name + ')';
+    if (row.spread_months > 1) {
+      text += ' · spread over ' + row.spread_months + ' months from ' + monthName(row.spread_start.slice(0, 7));
+    }
+    return text;
   }
 
   // Swap a recent entry for an inline form to change it in place
@@ -527,17 +602,34 @@
     date.value = row.date;
 
     const cat = document.createElement('select');
-    for (const group of ['Need', 'Want']) {
-      const og = document.createElement('optgroup');
-      og.label = group === 'Need' ? 'Needs' : 'Wants';
-      categories.filter(c => c.want_need === group).forEach(c => {
-        const o = el('option', '', c.name);
-        o.value = c.id;
-        if (c.id === row.category_id) o.selected = true;
-        og.append(o);
-      });
-      cat.append(og);
+    // A retired category stays selectable for its own entries so an edit doesn't silently move them
+    const own = categories.find(c => c.id === row.category_id);
+    if (own && own.archived) {
+      const o = el('option', '', own.name + ' (counts as ' + resolveCat(own.id).name + ')');
+      o.value = own.id;
+      o.selected = true;
+      cat.append(o);
     }
+    activeCats.forEach(c => {
+      const o = el('option', '', c.name);
+      o.value = c.id;
+      if (c.id === row.category_id) o.selected = true;
+      cat.append(o);
+    });
+
+    const spread = {
+      spreadMonths: row.spread_months || 1,
+      spreadStart: row.spread_start ? row.spread_start.slice(0, 7) : '',
+    };
+    const spreadSlot = el('div');
+    function showSpread() {
+      spreadSlot.replaceChildren();
+      if (canSpread(Number(cat.value))) {
+        spreadSlot.append(spreadFields(spread, () => amount.value, () => date.value).box);
+      }
+    }
+    cat.onchange = showSpread;
+    showSpread();
 
     const err = el('p', 'err-text');
     const actions = el('div', 'edit-actions');
@@ -558,6 +650,7 @@
         amount: Math.round(amt * 100) / 100,
         date: date.value,
         category_id: Number(cat.value),
+        ...spreadColumns(spread, Number(cat.value)),
       }).eq('id', row.id).select('id');
       save.disabled = false;
       if (error) { err.textContent = 'Could not save: ' + error.message; return; }
@@ -571,6 +664,7 @@
       field('Amount', amount),
       field('Date', date),
       field('Category', cat),
+      spreadSlot,
       err,
       actions,
     );
@@ -579,13 +673,16 @@
 
   // ---- Dashboard ----
   const FIRST_MONTH = '2026-09'; // the earliest month tab, even before it has data
-  const MONTHLY_BUDGET = 1500;
-  // Categories left out of the budget: any whose name contains this text
-  const BUDGET_EXCLUDE = 'major experience';
+  let allItems = [];             // every entry, loaded when the dashboard opens
 
   function nextYM(ym) {
     const [y, m] = ym.split('-').map(Number);
     return m === 12 ? (y + 1) + '-01' : y + '-' + String(m + 1).padStart(2, '0');
+  }
+  function addMonths(ym, n) {
+    const [y, m] = ym.split('-').map(Number);
+    const t = y * 12 + (m - 1) + n;
+    return Math.floor(t / 12) + '-' + String(t % 12 + 1).padStart(2, '0');
   }
   function monthName(ym, style) {
     const [y, m] = ym.split('-').map(Number);
@@ -611,30 +708,77 @@
   document.querySelectorAll('#nav button').forEach(b => { b.onclick = () => setView(b.dataset.view); });
 
   async function refreshDashboard() {
-    await buildMonths();
+    const { data, error } = await db
+      .from('line_items')
+      .select('id,date,merchant,amount,category_id,spread_start,spread_months')
+      .limit(10000);
+    if (error) { $('dash-body').replaceChildren(el('p', 'err-text', 'Could not load entries: ' + error.message)); return; }
+    allItems = data;
+    buildMonths();
     renderMonthTabs();
-    await loadDashboard();
+    renderDashboard();
   }
 
-  // Month tabs run from the first month through the current month, plus any month that has data
-  async function buildMonths() {
-    const [first, last] = await Promise.all([
-      db.from('line_items').select('date').order('date', { ascending: true }).limit(1),
-      db.from('line_items').select('date').order('date', { ascending: false }).limit(1),
-    ]);
+  // The months an entry counts in, to the cent. A spread entry is split evenly,
+  // with any leftover cent in its first month.
+  function allocations(item) {
+    const n = item.spread_months > 1 && item.spread_start ? item.spread_months : 1;
+    const start = (n > 1 ? item.spread_start : item.date).slice(0, 7);
+    const cents = Math.round(Number(item.amount) * 100);
+    const each = Math.floor(cents / n);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      out.push({ ym: addMonths(start, i), amt: (each + (i === 0 ? cents - each * n : 0)) / 100, part: i + 1, of: n });
+    }
+    return out;
+  }
+
+  // Spending per month per current category: Map ym -> Map categoryId -> amount (0 = uncategorized)
+  function spendByMonth() {
+    const spent = new Map();
+    allItems.forEach(it => {
+      const c = resolveCat(it.category_id);
+      const key = c ? c.id : 0;
+      allocations(it).forEach(a => {
+        if (!spent.has(a.ym)) spent.set(a.ym, new Map());
+        const m = spent.get(a.ym);
+        m.set(key, (m.get(key) || 0) + a.amt);
+      });
+    });
+    return spent;
+  }
+
+  // A category's budget in a month: its latest budget that has started, or null for none
+  function budgetFor(catId, ym) {
+    let amt = null;
+    budgets.forEach(b => { if (b.category_id === catId && b.starts_month.slice(0, 7) <= ym) amt = Number(b.amount); });
+    return amt;
+  }
+
+  // Leftover (+) or overspend (-) from every budgeted month before ym
+  function carryInto(catId, ym, spent) {
+    const first = budgets.find(b => b.category_id === catId);
+    if (!first) return 0;
+    let carry = 0;
+    for (let m = first.starts_month.slice(0, 7); m < ym; m = nextYM(m)) {
+      const b = budgetFor(catId, m);
+      if (b === null) continue;
+      carry += b - ((spent.get(m) && spent.get(m).get(catId)) || 0);
+    }
+    return Math.round(carry * 100) / 100;
+  }
+
+  // Month tabs run from the first month through the current month, plus any month an entry counts in
+  function buildMonths() {
     const thisMonth = todayLocal().slice(0, 7);
-    let start = FIRST_MONTH, end = thisMonth, latestWithData = null;
-    if (first.data && first.data.length) {
-      const ym = first.data[0].date.slice(0, 7);
-      if (ym < start) start = ym;
-    }
-    if (last.data && last.data.length) {
-      latestWithData = last.data[0].date.slice(0, 7);
-      if (latestWithData > end) end = latestWithData;
-    }
+    let start = FIRST_MONTH, end = thisMonth;
+    allItems.forEach(it => allocations(it).forEach(a => {
+      if (a.ym < start) start = a.ym;
+      if (a.ym > end) end = a.ym;
+    }));
     months = [];
     for (let ym = start; ym <= end; ym = nextYM(ym)) months.push(ym);
-    if (!activeMonth || !months.includes(activeMonth)) activeMonth = latestWithData || thisMonth;
+    if (!activeMonth || !months.includes(activeMonth)) activeMonth = thisMonth;
   }
 
   function renderMonthTabs() {
@@ -650,132 +794,109 @@
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-label', monthName(ym, 'long'));
       b.setAttribute('aria-selected', String(ym === activeMonth));
-      b.onclick = () => { activeMonth = ym; renderMonthTabs(); loadDashboard(); };
+      b.onclick = () => { activeMonth = ym; renderMonthTabs(); renderDashboard(); };
       wrap.append(b);
     });
     const sel = wrap.querySelector('[aria-selected="true"]');
     if (sel) sel.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
 
-  function catRow(name, amt, total, group) {
-    const li = el('li', 'cat ' + group + (amt === 0 ? ' zero' : ''));
+  function signedMoney(n) { return (n < 0 ? '−' : '+') + money(Math.abs(n)); }
+
+  // One category: spent against what's available, or a share of the month when it has no budget
+  function catRow(c, amt, info, total) {
+    const over = info && amt > info.avail + 0.005;
+    const li = el('li', 'cat' + (c ? '' : ' none') + (amt === 0 ? ' zero' : ''));
     const top = el('div', 'cat-top');
-    top.append(el('span', 'cat-name', name));
+    top.append(el('span', 'cat-name', c ? c.name : 'Uncategorized'));
     top.append(el('span', 'cat-amt', money(amt)));
-    top.append(el('span', 'cat-pct', pct(amt, total).toFixed(1) + '%'));
+    top.append(el('span', 'cat-of', info ? 'of ' + money(info.avail) : ''));
     li.append(top);
+
     const track = el('div', 'bar-track');
     track.setAttribute('aria-hidden', 'true');
-    const fill = el('div', 'bar-fill');
-    fill.style.width = pct(amt, total) + '%';
+    const fill = el('div', 'bar-fill' + (over ? ' over' : ''));
+    const width = info ? (info.avail > 0 ? pct(amt, info.avail) : (amt > 0 ? 100 : 0)) : pct(amt, total);
+    fill.style.width = Math.min(width, 100) + '%';
     track.append(fill);
     li.append(track);
+
+    const sub = el('p', 'cat-sub');
+    if (info) {
+      sub.append(el('span', over ? 'over' : '', over ? money(amt - info.avail) + ' over' : money(info.avail - amt) + ' left'));
+      let detail = ' · ' + money(info.budget) + ' budget';
+      if (info.carry !== 0) detail += ' ' + signedMoney(info.carry) + ' carried over';
+      sub.append(document.createTextNode(detail));
+    } else {
+      sub.textContent = 'No budget · ' + pct(amt, total).toFixed(1) + '% of the month';
+    }
+    li.append(sub);
     return li;
   }
 
-  async function loadDashboard() {
+  function renderDashboard() {
     const body = $('dash-body');
     const ym = activeMonth;
-    body.replaceChildren(el('p', 'empty', 'Loading...'));
-
-    const { data, error } = await db
-      .from('line_items')
-      .select('amount,categories(name,want_need)')
-      .gte('date', ym + '-01')
-      .lt('date', nextYM(ym) + '-01')
-      .limit(5000);
-
-    if (ym !== activeMonth) return; // another tab was picked while this one loaded
     body.replaceChildren();
 
-    if (error) { body.append(el('p', 'err-text', 'Could not load this month: ' + error.message)); return; }
-    if (!data.length) {
+    const spent = spendByMonth();
+    const month = spent.get(ym) || new Map();
+    const parts = [];
+    allItems.forEach(it => allocations(it).forEach(a => { if (a.ym === ym) parts.push({ it, a }); }));
+    const hasBudget = activeCats.some(c => budgetFor(c.id, ym) !== null);
+
+    if (!parts.length && !hasBudget) {
       body.append(el('p', 'empty', 'Nothing logged for ' + monthName(ym, 'long') + ' yet. Entries dated in this month, whether logged here or imported, will show up on this tab.'));
       return;
     }
 
-    // Add up spend per category
-    const byCat = new Map();
     let total = 0;
-    data.forEach(r => {
-      const name = r.categories ? r.categories.name : 'Uncategorized';
-      const amt = Number(r.amount);
-      byCat.set(name, (byCat.get(name) || 0) + amt);
-      total += amt;
-    });
-
-    const groups = { Need: [], Want: [] };
-    const groupTotal = { Need: 0, Want: 0 };
-    categories.forEach(c => {
-      const amt = byCat.get(c.name) || 0;
-      groups[c.want_need].push({ name: c.name, amt });
-      groupTotal[c.want_need] += amt;
-    });
+    month.forEach(v => { total += v; });
 
     // Month total
     const totalRow = el('div', 'dash-total');
     totalRow.append(el('span', 'cur', '$'));
     totalRow.append(el('span', 'num', bigMoney(total)));
     body.append(totalRow);
-    body.append(el('p', 'dash-sub', data.length + (data.length === 1 ? ' entry' : ' entries') + ' in ' + monthName(ym, 'long')));
+    const spreadIn = parts.filter(p => p.a.of > 1).length;
+    body.append(el('p', 'dash-sub', parts.length + (parts.length === 1 ? ' entry' : ' entries') + ' in ' + monthName(ym, 'long')
+      + (spreadIn ? ', ' + spreadIn + ' of them spread across months' : '')));
 
-    // Monthly budget, not counting major experiences
-    let excluded = 0;
-    byCat.forEach((amt, name) => { if (name.toLowerCase().includes(BUDGET_EXCLUDE)) excluded += amt; });
-    const budgetSpent = total - excluded;
-    const over = budgetSpent > MONTHLY_BUDGET;
-    body.append(el('h2', '', 'Monthly budget'));
-    const bTop = el('div', 'budget-top');
-    bTop.append(el('span', 'spent', money(budgetSpent) + ' of ' + money(MONTHLY_BUDGET) + '*'));
-    bTop.append(el('span', 'left' + (over ? ' over' : ''),
-      over ? money(budgetSpent - MONTHLY_BUDGET) + ' over' : money(MONTHLY_BUDGET - budgetSpent) + ' left'));
-    body.append(bTop);
-    const bTrack = el('div', 'budget-track');
-    bTrack.setAttribute('aria-hidden', 'true');
-    const bFill = el('div', 'budget-fill' + (over ? ' over' : ''));
-    bFill.style.width = Math.min(pct(budgetSpent, MONTHLY_BUDGET), 100) + '%';
-    bTrack.append(bFill);
-    body.append(bTrack);
-    body.append(el('p', 'footnote', '* Does not include major experiences'
-      + (excluded > 0 ? ' (' + money(excluded) + ' this month).' : '.')));
-
-    // Needs vs wants
-    body.append(el('h2', '', 'Needs vs wants'));
-    const bar = el('div', 'split-bar');
-    bar.setAttribute('aria-hidden', 'true');
-    const nSeg = el('span', 'n'); nSeg.style.width = pct(groupTotal.Need, total) + '%';
-    const wSeg = el('span', 'w'); wSeg.style.width = pct(groupTotal.Want, total) + '%';
-    bar.append(nSeg, wSeg);
-    body.append(bar);
-
-    const legend = el('div', 'legend');
-    [['n', 'Needs', groupTotal.Need], ['w', 'Wants', groupTotal.Want]].forEach(([cls, label, amt]) => {
-      const item = el('div');
-      item.append(el('span', 'sw ' + cls));
-      item.append(document.createTextNode(label + ' ' + money(amt) + ' (' + pct(amt, total).toFixed(1) + '%)'));
-      legend.append(item);
+    // Per category budget, carryover and spending
+    const rows = activeCats.map(c => {
+      const budget = budgetFor(c.id, ym);
+      const amt = month.get(c.id) || 0;
+      if (budget === null) return { c, amt, info: null };
+      const carry = carryInto(c.id, ym, spent);
+      return { c, amt, info: { budget, carry, avail: Math.round((budget + carry) * 100) / 100 } };
     });
-    body.append(legend);
+    const uncategorized = month.get(0) || 0;
 
-    // By category, biggest first within each group
+    // By category, in the order you log them
     body.append(el('h2', '', 'By category'));
-    [['Need', 'Needs'], ['Want', 'Wants']].forEach(([key, label]) => {
-      const head = el('div', 'group-head');
-      head.append(el('h3', '', label));
-      head.append(el('span', '', money(groupTotal[key])));
-      body.append(head);
-      const list = el('ul', 'cats');
-      groups[key].sort((a, b) => b.amt - a.amt)
-        .forEach(c => list.append(catRow(c.name, c.amt, total, key.toLowerCase())));
-      body.append(list);
-    });
+    const list = el('ul', 'cats');
+    rows.forEach(r => list.append(catRow(r.c, r.amt, r.info, total)));
+    if (uncategorized > 0) list.append(catRow(null, uncategorized, null, total));
+    body.append(list);
 
-    const uncategorized = byCat.get('Uncategorized') || 0;
-    if (uncategorized > 0) {
-      const head = el('div', 'group-head');
-      head.append(el('h3', '', 'Uncategorized'));
-      head.append(el('span', '', money(uncategorized)));
-      body.append(head);
+    // Purchases spread into this month
+    const spreadParts = parts.filter(p => p.a.of > 1);
+    if (spreadParts.length) {
+      body.append(el('h2', '', 'Spread into this month'));
+      const sl = el('ul', 'cats');
+      spreadParts.forEach(({ it, a }) => {
+        const li = el('li', 'cat');
+        const top = el('div', 'cat-top');
+        top.append(el('span', 'cat-name', it.merchant));
+        top.append(el('span', 'cat-amt', money(a.amt)));
+        top.append(el('span', 'cat-of', ''));
+        li.append(top);
+        const [, mm, dd] = it.date.split('-');
+        li.append(el('p', 'cat-sub', 'Month ' + a.part + ' of ' + a.of + ' · ' + money(it.amount)
+          + ' bought ' + Number(mm) + '/' + Number(dd)));
+        sl.append(li);
+      });
+      body.append(sl);
     }
   }
 
